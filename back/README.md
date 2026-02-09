@@ -1,16 +1,17 @@
-Provisional backend: This will load a provisional model with 1 enpoint (predict). The full backend will be similar. Use it to integrate the frontend in the meantime.
+## Backend (FastAPI + Motor + MongoDB)
 
+### Requisitos
+- Python 3.11+
+- MongoDB local (ej: mongodb://localhost:27017)
 
-How to install dependencies.
-- Create virtual enviroment:
-python -m venv .venv 
+### Setup
+```bash
+cd back
+python -m venv .venv # Crea el entorno virtual
+source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+pip install -U pip
+pip install -e .
+```
 
-- activate enviroment:
-.venv\Scripts\activate 
-
-- Install dependencies:
-pip install fastapi uvicorn motor pydantic-settings python-dotenv torch
-
-- Run predict.py
-uvicorn predict:app --reload
-
+- Ejecutar el proyecto
+uvicorn app.main:app --reload
