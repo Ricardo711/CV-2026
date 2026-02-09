@@ -13,17 +13,17 @@ st.title("Login")
 
 # Si ya hay sesión en memoria, manda a Dashboard
 if st.session_state.get("token") and st.session_state.get("user"):
-    st.info("Ya hay una sesión activa.")
+    st.info("Already logged in. Redirecting to Dashboard...")
     st.switch_page("pages/3_Dashboard.py")
 
 with st.form("login_form", clear_on_submit=False):
-    email = st.text_input("Email", placeholder="tu@email.com")
+    email = st.text_input("Email", placeholder="your@email.com")
     password = st.text_input("Password", type="password")
-    submit = st.form_submit_button("Entrar")
+    submit = st.form_submit_button("Login")
 
 if submit:
     if not email or not password:
-        st.error("Email y password son obligatorios.")
+        st.error("Email and password are required.")
         st.stop()
 
     try:
@@ -33,18 +33,18 @@ if submit:
 
         token = login_res.get("access_token")
         if not token:
-            st.error("Respuesta de login sin access_token. Revisa el backend.")
+            st.error("Login response missing access_token. Check the backend.")
             st.stop()
 
-        # Cargar usuario con Bearer
+        # Load user with Bearer
         me = api.get_json(AUTH_ME_PATH, token=token)
 
         set_session_user(me, token)
 
-        st.success("Sesión iniciada.")
+        st.success("Logged in successfully.")
         st.switch_page("pages/3_Dashboard.py")
 
     except APIError as e:
-        st.error(f"Login falló ({e.status_code}): {e.detail}")
+        st.error(f"Login failed ({e.status_code}): {e.detail}")
     except Exception as e:
-        st.error(f"Error inesperado: {e}")
+        st.error(f"Unexpected error: {e}")
