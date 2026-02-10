@@ -16,6 +16,8 @@ class PredictionOut(BaseModel):
     predicted_label: str
     confidence: float = Field(ge=0.0, le=1.0)
 
+    student_marbling_answer: str | None = None
+
     created_at: datetime
     feedback: PredictionFeedbackOut | None = None
 
@@ -27,6 +29,9 @@ class PredictionListOut(BaseModel):
     image_url: str
     predicted_label: str
     confidence: float
+
+    student_marbling_answer: str | None = None
+
     created_at: datetime
 
     feedback: PredictionFeedbackOut | None = None

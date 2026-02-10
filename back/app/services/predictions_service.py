@@ -40,6 +40,7 @@ class PredictionsService:
                     "image_url": d["image_url"],
                     "predicted_label": d["predicted_label"],
                     "confidence": d["confidence"],
+                    "student_marbling_answer": d.get("student_marbling_answer"),
                     "created_at": d["created_at"],
                     "feedback": d.get("feedback"),
                 }
@@ -67,6 +68,7 @@ class PredictionsService:
             "predicted_index": d["predicted_index"],
             "predicted_label": d["predicted_label"],
             "confidence": d["confidence"],
+            "student_marbling_answer": d.get("student_marbling_answer"),
             "created_at": d["created_at"],
             "feedback": d.get("feedback"),
         }
@@ -116,13 +118,17 @@ class PredictionsService:
             "created_at": _utcnow(),
         }
 
+        set_doc: dict = {"feedback": feedback_doc}
+
+        if payload.student_marbling_answer is not None:
+            set_doc["student_marbling_answer"] = payload.student_marbling_answer
+
         res = await db[PredictionsService.collection_name].update_one(
             {"_id": _id},
-            {"$set": {"feedback": feedback_doc}},
+            {"$set": set_doc},
         )
 
         if res.matched_count == 0:
             raise HTTPException(status_code=404, detail="Predicción no encontrada")
 
-        # Regresa la predicción completa actualizada
         return await PredictionsService.get(prediction_id)

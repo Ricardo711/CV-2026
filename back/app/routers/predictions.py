@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 from PIL import Image
 
-from fastapi import APIRouter, File, UploadFile, Query, status
+from fastapi import APIRouter, File, UploadFile, Query, status, Form
 
 from app.core.config import settings
 from app.core.ml import predict_pil_image
@@ -18,7 +18,10 @@ router = APIRouter(tags=["predictions"])
 @router.post(
     "/predict", response_model=PredictionOut, status_code=status.HTTP_201_CREATED
 )
-async def predict(file: UploadFile = File(...)):
+async def predict(
+    file: UploadFile = File(...),
+    student_marbling_answer: str | None = Form(default=None),
+):
     # 1) Guardar imagen localmente
     saved = await save_upload_to_media(file)
     # 2) Cargar PIL desde el archivo guardado
@@ -31,6 +34,7 @@ async def predict(file: UploadFile = File(...)):
     doc = {
         "image_url": image_url,
         "image_path": saved["rel_path"],
+        "student_marbling_answer": student_marbling_answer,
         **pred,
     }
     created = await PredictionsService.create(doc)
@@ -43,6 +47,7 @@ async def predict(file: UploadFile = File(...)):
         "predicted_label": created["predicted_label"],
         "confidence": created["confidence"],
         "created_at": created["created_at"],
+        "student_marbling_answer": created["student_marbling_answer"],
     }
 
 
