@@ -1,9 +1,6 @@
 <template>
     <section class="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40">
         <h2 class="text-lg font-semibold">Result</h2>
-        <p class="mt-1 text-sm text-white/70">
-            This section updates after the prediction is created.
-        </p>
 
         <div class="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
             <div v-if="!prediction" class="text-sm text-white/70">

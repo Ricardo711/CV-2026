@@ -5,18 +5,18 @@
             <div>
                 <h2 class="text-lg font-semibold">Feedback</h2>
                 <p class="mt-1 text-sm text-white/70">
-                    Answer the questions below and submit your feedback.
+                    Step {{ step }} of 2
                 </p>
             </div>
 
-            <div v-if="submitted" class="rounded-xl bg-emerald-500/15 px-3 py-1
-               text-xs font-semibold text-emerald-200">
+            <div v-if="finalSubmitted"
+                class="rounded-xl bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">
                 Submitted
             </div>
         </div>
 
-        <!-- Q1 -->
-        <div class="mt-5">
+        <!-- STEP 1 -->
+        <div v-if="step === 1" class="mt-5">
             <div class="text-sm font-semibold">
                 1. What marbling class belongs to your image?
             </div>
@@ -30,83 +30,101 @@
                     <span class="text-sm">{{ opt }}</span>
                 </label>
             </div>
-        </div>
 
-        <!-- Q2 -->
-        <div class="mt-6">
-            <div class="text-sm font-semibold">
-                2. Do you agree with the AI prediction?
-            </div>
+            <!-- Actions step 1 -->
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+                <button type="button" class="rounded-xl bg-[#8c0a42] px-4 py-2 text-sm font-semibold hover:brightness-110
+                 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="!canSubmitStep1 || loading" @click="$emit('submit-step1')">
+                    <span v-if="loading">Saving...</span>
+                    <span v-else>Next</span>
+                </button>
 
-            <div class="mt-3 flex gap-3">
-                <label v-for="opt in agreeOptions" :key="opt.value" class="flex cursor-pointer items-center gap-2 rounded-xl
-                 border border-white/10 bg-black/20 px-3 py-2
-                 hover:border-[#8c0a42]/50 hover:bg-[#8c0a42]/10 transition">
-                    <input class="h-4 w-4 accent-[#8c0a42]" type="radio" name="feedback-agree" :value="opt.value"
-                        :checked="modelValue.agree === opt.value" @change="update('agree', opt.value)" />
-                    <span class="text-sm">{{ opt.label }}</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Q3 -->
-        <div class="mt-6">
-            <div class="text-sm font-semibold">
-                3. How confident are you in your final answer?
-            </div>
-
-            <div class="mt-3 flex flex-wrap gap-2">
-                <button v-for="n in scale" :key="'conf-' + n" type="button"
-                    class="rounded-xl border px-3 py-2 text-sm font-semibold transition"
-                    :class="scaleClass(modelValue.confidence === n)" @click="update('confidence', n)">
-                    {{ n }}
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
+                 hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('reset')">
+                    New prediction
                 </button>
             </div>
         </div>
 
-        <!-- Q4 -->
-        <div class="mt-6">
-            <div class="text-sm font-semibold">
-                4. How helpful was the AI for this image?
+        <!-- STEP 2 -->
+        <div v-else class="mt-5">
+            <!-- Q2 -->
+            <div>
+                <div class="text-sm font-semibold">
+                    2. Do you agree with the AI prediction?
+                </div>
+
+                <div class="mt-3 flex gap-3">
+                    <label v-for="opt in agreeOptions" :key="opt.value" class="flex cursor-pointer items-center gap-2 rounded-xl
+                   border border-white/10 bg-black/20 px-3 py-2
+                   hover:border-[#8c0a42]/50 hover:bg-[#8c0a42]/10 transition">
+                        <input class="h-4 w-4 accent-[#8c0a42]" type="radio" name="feedback-agree" :value="opt.value"
+                            :checked="modelValue.agree === opt.value" @change="update('agree', opt.value)" />
+                        <span class="text-sm">{{ opt.label }}</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="mt-3 flex flex-wrap gap-2">
-                <button v-for="n in scale" :key="'help-' + n" type="button"
-                    class="rounded-xl border px-3 py-2 text-sm font-semibold transition"
-                    :class="scaleClass(modelValue.helpfulness === n)" @click="update('helpfulness', n)">
-                    {{ n }}
+            <!-- Q3 -->
+            <div class="mt-6">
+                <div class="text-sm font-semibold">
+                    3. How confident are you in your final answer?
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button v-for="n in scale" :key="'conf-' + n" type="button"
+                        class="rounded-xl border px-3 py-2 text-sm font-semibold transition"
+                        :class="scaleClass(modelValue.confidence === n)" @click="update('confidence', n)">
+                        {{ n }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="mt-6">
+                <div class="text-sm font-semibold">
+                    4. How helpful was the AI for this image?
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button v-for="n in scale" :key="'help-' + n" type="button"
+                        class="rounded-xl border px-3 py-2 text-sm font-semibold transition"
+                        :class="scaleClass(modelValue.helpfulness === n)" @click="update('helpfulness', n)">
+                        {{ n }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions step 2 -->
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+                <div v-if="!finalSubmitted" class="flex flex-wrap items-center gap-3">
+                    <button type="button" class="rounded-xl bg-[#8c0a42] px-4 py-2 text-sm font-semibold hover:brightness-110
+                     active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="!canSubmitStep2 || loading" @click="$emit('submit-final')">
+                        <span v-if="loading">Submitting...</span>
+                        <span v-else>Submit feedback</span>
+                    </button>
+    
+                    <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
+                     hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('back')"
+                        :disabled="loading || finalSubmitted">
+                        Back
+                    </button>
+                </div>
+
+                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
+                 hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('reset')">
+                    New prediction
                 </button>
             </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="mt-6 flex flex-wrap items-center gap-3">
-            <button type="button" class="rounded-xl bg-[#8c0a42] px-4 py-2
-               text-sm font-semibold hover:brightness-110
-               active:scale-[0.99] transition
-               disabled:opacity-50 disabled:cursor-not-allowed" :disabled="!canSubmit || loading"
-                @click="$emit('submit')">
-                <span v-if="loading">Submitting...</span>
-                <span v-else>Submit feedback</span>
-            </button>
-
-            <button type="button" class="rounded-xl border border-white/10 bg-white/5
-               px-4 py-2 text-sm font-medium
-               hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('reset')">
-                New prediction
-            </button>
-        </div>
-
-        <div v-if="prediction" class="mt-3 text-xs text-white/50">
-            Prediction ID: {{ prediction.id }}
         </div>
     </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { MarblingClass, Prediction } from "../../api/predictions";
-
-/* Types */
 
 type FeedbackModel = {
     marbling: string | null;
@@ -115,24 +133,22 @@ type FeedbackModel = {
     helpfulness: number | null;
 };
 
-/* Props / Emits */
-
 const props = defineProps<{
     modelValue: FeedbackModel;
     options: readonly MarblingClass[];
     prediction: Prediction | null;
-    submitted: boolean;
-    canSubmit: boolean;
+    step: 1 | 2;
+    finalSubmitted: boolean;
     loading: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: "update:modelValue", value: FeedbackModel): void;
-    (e: "submit"): void;
+    (e: "submit-step1"): void;
+    (e: "submit-final"): void;
+    (e: "back"): void;
     (e: "reset"): void;
 }>();
-
-/* Constants */
 
 const agreeOptions = [
     { label: "Yes", value: 1 as const },
@@ -141,16 +157,18 @@ const agreeOptions = [
 
 const scale = [1, 2, 3, 4, 5] as const;
 
-/* Handlers */
+const canSubmitStep1 = computed(() => !!props.modelValue.marbling && !!props.prediction);
+const canSubmitStep2 = computed(() => {
+    return (
+        !!props.prediction &&
+        props.modelValue.agree !== null &&
+        props.modelValue.confidence !== null &&
+        props.modelValue.helpfulness !== null
+    );
+});
 
-function update<K extends keyof FeedbackModel>(
-    key: K,
-    value: FeedbackModel[K]
-) {
-    emit("update:modelValue", {
-        ...props.modelValue,
-        [key]: value,
-    });
+function update<K extends keyof FeedbackModel>(key: K, value: FeedbackModel[K]) {
+    emit("update:modelValue", { ...props.modelValue, [key]: value });
 }
 
 function scaleClass(active: boolean) {

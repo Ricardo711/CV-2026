@@ -53,3 +53,27 @@ export async function sendFeedback(
     body: payload,
   });
 }
+
+export async function sendFeedbackStep1(
+  predictionId: string,
+  payload: { student_marbling_answer: MarblingClass },
+) {
+  return api<any>(`/api/predictions/${predictionId}/feedback`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function sendFeedbackStep2(
+  predictionId: string,
+  payload: {
+    agree_with_model: 0 | 1;
+    student_confidence: 1 | 2 | 3 | 4 | 5;
+    helpfulness_rating: 1 | 2 | 3 | 4 | 5;
+  },
+) {
+  return api<any>(`/api/predictions/${predictionId}/feedback`, {
+    method: "POST",
+    body: payload,
+  });
+}

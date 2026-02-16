@@ -100,8 +100,6 @@ class PredictionsService:
 
     @staticmethod
     async def set_feedback(prediction_id: str, payload: PredictionFeedbackIn) -> dict:
-        from app.db.mongo import get_db
-
         db = get_db()
 
         from bson import ObjectId
@@ -111,24 +109,29 @@ class PredictionsService:
         except Exception:
             raise HTTPException(status_code=400, detail="id inválido")
 
-        feedback_doc = {
-            "agree_with_model": payload.agree_with_model,
-            "student_confidence": payload.student_confidence,
-            "helpfulness_rating": payload.helpfulness_rating,
-            "created_at": _utcnow(),
-        }
+        data = payload.model_dump(exclude_none=True)
+        now = _utcnow()
 
-        set_doc: dict = {"feedback": feedback_doc}
+        set_doc: dict[str, object] = {f"feedback.{k}": v for k, v in data.items()}
+        set_doc["feedback.updated_at"] = now
 
-        if payload.student_marbling_answer is not None:
-            set_doc["student_marbling_answer"] = payload.student_marbling_answer
+        if "student_marbling_answer" in data:
+            set_doc["student_marbling_answer"] = data["student_marbling_answer"]
 
-        res = await db[PredictionsService.collection_name].update_one(
+        existing = await db[PredictionsService.collection_name].find_one(
+            {"_id": _id},
+            {"feedback.created_at": 1},
+        )
+        if not existing:
+            raise HTTPException(status_code=404, detail="Predicción no encontrada")
+
+        feedback_created = (existing.get("feedback") or {}).get("created_at")
+        if feedback_created is None:
+            set_doc["feedback.created_at"] = now
+
+        await db[PredictionsService.collection_name].update_one(
             {"_id": _id},
             {"$set": set_doc},
         )
-
-        if res.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Predicción no encontrada")
 
         return await PredictionsService.get(prediction_id)

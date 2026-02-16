@@ -1,23 +1,21 @@
-import { computed, onBeforeUnmount, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import {
   MARBLING_OPTIONS,
   type MarblingClass,
   type Prediction,
   createPrediction,
-  sendFeedback,
+  sendFeedbackStep1,
+  sendFeedbackStep2,
 } from "../api/predictions";
 import { ApiError } from "../api/http";
 
 // types
-
 type FeedbackState = {
   marbling: MarblingClass | null;
-  agree: number | null;
-  confidence: number | null;
-  helpfulness: number | null;
+  agree: number | null; // 0|1
+  confidence: number | null; // 1..5
+  helpfulness: number | null; // 1..5
 };
-
-/* ---- Composable ----- */
 
 export function usePredictionFlow() {
   /* ---------- Core state ---------- */
@@ -38,10 +36,12 @@ export function usePredictionFlow() {
 
   const feedback = ref<FeedbackState>({
     marbling: null,
-    agree: 0,
-    confidence: 1,
-    helpfulness: 1,
+    agree: null,
+    confidence: null,
+    helpfulness: null,
   });
+
+  const feedbackStep = ref<1 | 2>(1);
 
   /* ---- Derived state ----- */
 
@@ -52,12 +52,21 @@ export function usePredictionFlow() {
     return !!selectedFile.value && !!initialMarbling.value && !predicting.value;
   });
 
-  const canSubmitFeedback = computed(() => {
+  // Validaciones por paso
+  const canSubmitFeedbackStep1 = computed(() => {
     return (
       !!prediction.value &&
       !feedbackSubmitted.value &&
       !submittingFeedback.value &&
-      !!feedback.value.marbling &&
+      !!feedback.value.marbling
+    );
+  });
+
+  const canSubmitFeedbackFinal = computed(() => {
+    return (
+      !!prediction.value &&
+      !feedbackSubmitted.value &&
+      !submittingFeedback.value &&
       feedback.value.agree !== null &&
       feedback.value.confidence !== null &&
       feedback.value.helpfulness !== null
@@ -74,11 +83,8 @@ export function usePredictionFlow() {
   /* ---- Error handling ----- */
 
   function setError(e: unknown) {
-    if (e instanceof ApiError) {
-      errorMsg.value = e.message;
-    } else {
-      errorMsg.value = "Something went wrong. Please try again.";
-    }
+    if (e instanceof ApiError) errorMsg.value = e.message;
+    else errorMsg.value = "Something went wrong. Please try again.";
   }
 
   function clearError() {
@@ -105,7 +111,6 @@ export function usePredictionFlow() {
 
   function onFileSelected(file: File) {
     clearError();
-
     revokePreview();
 
     selectedFile.value = file;
@@ -114,7 +119,9 @@ export function usePredictionFlow() {
     initialMarbling.value = null;
     prediction.value = null;
     feedbackSubmitted.value = false;
+
     resetFeedback();
+    feedbackStep.value = 1;
   }
 
   function resetAll() {
@@ -126,7 +133,9 @@ export function usePredictionFlow() {
     initialMarbling.value = null;
     prediction.value = null;
     feedbackSubmitted.value = false;
+
     resetFeedback();
+    feedbackStep.value = 1;
   }
 
   async function onPredict() {
@@ -143,9 +152,10 @@ export function usePredictionFlow() {
 
       prediction.value = res;
 
-      // UX: precargar respuesta inicial
+      // UX: precargar marbling en feedback
       feedback.value.marbling = initialMarbling.value;
       feedbackSubmitted.value = false;
+      feedbackStep.value = 1;
     } catch (e) {
       setError(e);
     } finally {
@@ -153,15 +163,35 @@ export function usePredictionFlow() {
     }
   }
 
-  async function submitFeedback() {
-    if (!prediction.value || !canSubmitFeedback.value) return;
+  // enviar solo Q1 y avanzar
+  async function submitFeedbackStep1() {
+    if (!prediction.value || !canSubmitFeedbackStep1.value) return;
 
     clearError();
     submittingFeedback.value = true;
 
     try {
-      await sendFeedback(prediction.value.id, {
+      await sendFeedbackStep1(prediction.value.id, {
         student_marbling_answer: feedback.value.marbling as MarblingClass,
+      });
+
+      feedbackStep.value = 2;
+    } catch (e) {
+      setError(e);
+    } finally {
+      submittingFeedback.value = false;
+    }
+  }
+
+  // enviar Q2-Q4 y marcar como submitted
+  async function submitFeedbackFinal() {
+    if (!prediction.value || !canSubmitFeedbackFinal.value) return;
+
+    clearError();
+    submittingFeedback.value = true;
+
+    try {
+      await sendFeedbackStep2(prediction.value.id, {
         agree_with_model: feedback.value.agree as 0 | 1,
         student_confidence: feedback.value.confidence as 1 | 2 | 3 | 4 | 5,
         helpfulness_rating: feedback.value.helpfulness as 1 | 2 | 3 | 4 | 5,
@@ -173,6 +203,11 @@ export function usePredictionFlow() {
     } finally {
       submittingFeedback.value = false;
     }
+  }
+
+  function goBackToStep1() {
+    if (feedbackSubmitted.value) return;
+    feedbackStep.value = 1;
   }
 
   /* ---- Lifecycle ----- */
@@ -190,6 +225,7 @@ export function usePredictionFlow() {
     initialMarbling,
     prediction,
     feedback,
+    feedbackStep,
     feedbackSubmitted,
     predicting,
     submittingFeedback,
@@ -197,16 +233,19 @@ export function usePredictionFlow() {
 
     // derived
     canPredict,
-    canSubmitFeedback,
+    canSubmitFeedbackStep1,
+    canSubmitFeedbackFinal,
     flow,
 
     // actions
     onFileSelected,
     onPredict,
-    submitFeedback,
+    submitFeedbackStep1,
+    submitFeedbackFinal,
+    goBackToStep1,
     resetAll,
 
-    // constants (para componentes)
+    // constants
     MARBLING_OPTIONS,
   };
 }

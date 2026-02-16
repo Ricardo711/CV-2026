@@ -3,16 +3,13 @@
         <div class="flex items-start justify-between gap-4">
             <div>
                 <h2 class="text-lg font-semibold">Preview</h2>
-                <p class="mt-1 text-sm text-white/70">
-                    Verify the image before predicting.
-                </p>
             </div>
 
             <div class="h-2.5 w-2.5 rounded-full" :class="file ? 'bg-[#8c0a42]' : 'bg-white/20'" aria-hidden="true" />
         </div>
 
         <div class="mt-5">
-            <div class="aspect-4/3 w-full overflow-hidden rounded-2xl
+            <div class="aspect-6/3 w-full overflow-hidden rounded-2xl
                border border-white/10 bg-black/30">
                 <img v-if="previewUrl" :src="previewUrl" alt="Image preview" class="h-full w-full object-contain" />
 

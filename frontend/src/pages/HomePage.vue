@@ -22,8 +22,10 @@
                         @predict="onPredict" @reset="resetAll" />
 
                     <FeedbackForm v-if="flow.isFeedback" v-model="feedback" :options="MARBLING_OPTIONS"
-                        :prediction="prediction" :submitted="feedbackSubmitted" :can-submit="canSubmitFeedback"
-                        :loading="submittingFeedback" @submit="submitFeedback" @reset="resetAll" />
+                        :prediction="prediction" :step="feedbackStep" :final-submitted="feedbackSubmitted"
+                        :loading="submittingFeedback" @submit-step1="submitFeedbackStep1"
+                        @submit-final="submitFeedbackFinal" @back="feedbackStep = 1" @reset="resetAll" />
+
                 </section>
 
                 <!-- Right -->
@@ -70,13 +72,14 @@ const {
     submittingFeedback,
     errorMsg,
     canPredict,
-    canSubmitFeedback,
     flow,
     onFileSelected,
     onPredict,
-    submitFeedback,
     resetAll,
     MARBLING_OPTIONS,
+    feedbackStep,
+    submitFeedbackStep1,
+    submitFeedbackFinal,
 } = usePredictionFlow();
 
 /* Computed */
