@@ -13,7 +13,6 @@ from app.routers.health import router as health_router
 from app.routers.predictions import router as predictions_router
 from app.routers.auth import router as auth_router
 
-
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
