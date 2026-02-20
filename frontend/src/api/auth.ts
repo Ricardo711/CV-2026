@@ -18,14 +18,14 @@ export type LoginResponse = User & {
 };
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  return api<LoginResponse>("/api/auth/login", { method: "POST", body: payload });
+  return api<LoginResponse>("/auth/login", { method: "POST", body: payload });
 }
 
 export async function me(): Promise<User> {
-  return api<User>("/api/auth/me");
+  return api<User>("/auth/me");
 }
 
 export async function logout(): Promise<void> {
-  await api<null>("/api/auth/logout", { method: "POST" });
+  await api<null>("/auth/logout", { method: "POST" });
 }
 

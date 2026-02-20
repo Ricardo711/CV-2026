@@ -14,7 +14,6 @@ from app.routers.predictions import router as predictions_router
 from app.routers.auth import router as auth_router
 from app.routers.quiz import router as quiz_router
 
-
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 

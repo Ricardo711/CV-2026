@@ -23,7 +23,7 @@ dist/
 build/
 
 #archivos de imagen
-*.jpg
-*.jpeg
-*.png
-*.gif
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
