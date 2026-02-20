@@ -40,7 +40,7 @@
                     <span v-else>Next</span>
                 </button>
 
-                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
+                <button v-if="allowFullReset !== false" type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
                  hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('reset')">
                     New prediction
                 </button>
@@ -113,7 +113,7 @@
                     </button>
                 </div>
 
-                <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
+                <button v-if="allowFullReset !== false" type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium
                  hover:bg-white/10 active:scale-[0.99] transition" @click="$emit('reset')">
                     New prediction
                 </button>
@@ -140,6 +140,7 @@ const props = defineProps<{
     step: 1 | 2;
     finalSubmitted: boolean;
     loading: boolean;
+    allowFullReset?: boolean;
 }>();
 
 const emit = defineEmits<{

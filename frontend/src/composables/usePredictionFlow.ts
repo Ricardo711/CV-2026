@@ -8,6 +8,7 @@ import {
   sendFeedbackStep2,
 } from "../api/predictions";
 import { ApiError } from "../api/http";
+import { fetchQuizQuestion, type QuizQuestion } from "../api/quiz";
 
 // types
 type FeedbackState = {
@@ -17,7 +18,17 @@ type FeedbackState = {
   helpfulness: number | null; // 1..5
 };
 
+const TOTAL_ATTEMPTS = 5;
+
 export function usePredictionFlow() {
+  /* ---------- Attempt-level state ---------- */
+
+  const currentAttempt = ref(1);
+  const allAttemptsComplete = ref(false);
+  const quizQuestion = ref<QuizQuestion | null>(null);
+  const loadingQuiz = ref(false);
+  let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+
   /* ---------- Core state ---------- */
 
   const selectedFile = ref<File | null>(null);
@@ -73,11 +84,12 @@ export function usePredictionFlow() {
     );
   });
 
-  /* UI flow helper */
+  /* UI flow helper - incluye isQuiz para la pantalla final */
   const flow = computed(() => ({
-    isUpload: !hasFile.value,
-    isQuestion: hasFile.value && !hasPrediction.value,
-    isFeedback: hasPrediction.value,
+    isUpload: !allAttemptsComplete.value && !hasFile.value,
+    isQuestion: !allAttemptsComplete.value && hasFile.value && !hasPrediction.value,
+    isFeedback: !allAttemptsComplete.value && hasPrediction.value,
+    isQuiz: allAttemptsComplete.value,
   }));
 
   /* ---- Error handling ----- */
@@ -107,6 +119,35 @@ export function usePredictionFlow() {
     feedback.value.helpfulness = null;
   }
 
+  /* ---- Quiz helpers ----- */
+
+  async function _loadQuizQuestion() {
+    loadingQuiz.value = true;
+    quizQuestion.value = null;
+    clearError();
+    try {
+      quizQuestion.value = await fetchQuizQuestion();
+    } catch (e) {
+      setError(e);
+    } finally {
+      loadingQuiz.value = false;
+    }
+  }
+
+  /** Avanza al siguiente intento: incrementa contador y limpia estado de intento actual */
+  function _advanceToNextAttempt() {
+    currentAttempt.value += 1;
+    // Limpiar estado del intento (NO tocar currentAttempt ni allAttemptsComplete)
+    selectedFile.value = null;
+    revokePreview();
+    initialMarbling.value = null;
+    prediction.value = null;
+    feedbackSubmitted.value = false;
+    resetFeedback();
+    feedbackStep.value = 1;
+    clearError();
+  }
+
   /* ---- Actions ----- */
 
   function onFileSelected(file: File) {
@@ -124,6 +165,7 @@ export function usePredictionFlow() {
     feedbackStep.value = 1;
   }
 
+  /** Reinicia solo el intento actual (no retrocede el contador de intentos) */
   function resetAll() {
     clearError();
 
@@ -136,6 +178,15 @@ export function usePredictionFlow() {
 
     resetFeedback();
     feedbackStep.value = 1;
+  }
+
+  /** Reinicia completamente la sesión (5 intentos desde cero) */
+  function resetAllAttempts() {
+    if (advanceTimer) clearTimeout(advanceTimer);
+    currentAttempt.value = 1;
+    allAttemptsComplete.value = false;
+    quizQuestion.value = null;
+    resetAll();
   }
 
   async function onPredict() {
@@ -183,7 +234,7 @@ export function usePredictionFlow() {
     }
   }
 
-  // enviar Q2-Q4 y marcar como submitted
+  // enviar Q2-Q4 y marcar como submitted; si es el último intento → quiz
   async function submitFeedbackFinal() {
     if (!prediction.value || !canSubmitFeedbackFinal.value) return;
 
@@ -198,6 +249,18 @@ export function usePredictionFlow() {
       });
 
       feedbackSubmitted.value = true;
+
+      if (currentAttempt.value >= TOTAL_ATTEMPTS) {
+        // Último intento completado → cargar quiz
+        allAttemptsComplete.value = true;
+        await _loadQuizQuestion();
+      } else {
+        // Avanzar al siguiente intento después de un breve delay
+        // para que el estudiante vea el badge "Submitted"
+        advanceTimer = setTimeout(() => {
+          _advanceToNextAttempt();
+        }, 1200);
+      }
     } catch (e) {
       setError(e);
     } finally {
@@ -214,6 +277,7 @@ export function usePredictionFlow() {
 
   onBeforeUnmount(() => {
     revokePreview();
+    if (advanceTimer) clearTimeout(advanceTimer);
   });
 
   /* ---- Public API ----- */
@@ -231,6 +295,13 @@ export function usePredictionFlow() {
     submittingFeedback,
     errorMsg,
 
+    // attempt state
+    currentAttempt,
+    totalAttempts: TOTAL_ATTEMPTS,
+    allAttemptsComplete,
+    quizQuestion,
+    loadingQuiz,
+
     // derived
     canPredict,
     canSubmitFeedbackStep1,
@@ -244,6 +315,8 @@ export function usePredictionFlow() {
     submitFeedbackFinal,
     goBackToStep1,
     resetAll,
+    resetAllAttempts,
+    retryQuiz: _loadQuizQuestion,
 
     // constants
     MARBLING_OPTIONS,

@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     auth_cookie_samesite: str = "lax"  # "lax"|"strict"|"none"
     auth_cookie_secure: bool = False
 
+    quiz_target_class: str = "High Choice"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

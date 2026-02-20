@@ -12,6 +12,7 @@ from app.db.mongo import init_mongo, close_mongo
 from app.routers.health import router as health_router
 from app.routers.predictions import router as predictions_router
 from app.routers.auth import router as auth_router
+from app.routers.quiz import router as quiz_router
 
 
 def create_app() -> FastAPI:
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(predictions_router)
     app.include_router(auth_router)
+    app.include_router(quiz_router)
 
     # Static files: /media -> ./media
     media_dir = Path(settings.media_dir)
