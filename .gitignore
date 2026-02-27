@@ -1,0 +1,29 @@
+#archivos de configuracion*.ini
+*.cfg
+*.ini
+
+#archivos de log
+*.log
+
+#archivos de base de datos
+*.db
+
+#archivos de cache
+*.cache
+
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+.env
+.pytest_cache/
+.coverage
+dist/
+build/
+
+#archivos de imagen
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif
