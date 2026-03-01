@@ -41,14 +41,14 @@ export async function createPrediction(params: {
   fd.append("file", params.file);
   fd.append("student_marbling_answer", params.student_marbling_answer);
 
-  return api<Prediction>("/api/predict", { method: "POST", body: fd });
+  return api<Prediction>("/predict", { method: "POST", body: fd });
 }
 
 export async function sendFeedback(
   predictionId: string,
   payload: FeedbackPayload,
 ) {
-  return api<any>(`/api/predictions/${predictionId}/feedback`, {
+  return api<any>(`/predictions/${predictionId}/feedback`, {
     method: "POST",
     body: payload,
   });
@@ -58,7 +58,7 @@ export async function sendFeedbackStep1(
   predictionId: string,
   payload: { student_marbling_answer: MarblingClass },
 ) {
-  return api<any>(`/api/predictions/${predictionId}/feedback`, {
+  return api<any>(`/predictions/${predictionId}/feedback`, {
     method: "POST",
     body: payload,
   });
@@ -72,7 +72,7 @@ export async function sendFeedbackStep2(
     helpfulness_rating: 1 | 2 | 3 | 4 | 5;
   },
 ) {
-  return api<any>(`/api/predictions/${predictionId}/feedback`, {
+  return api<any>(`/predictions/${predictionId}/feedback`, {
     method: "POST",
     body: payload,
   });
