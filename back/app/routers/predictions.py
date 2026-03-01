@@ -26,6 +26,9 @@ async def predict(
     saved = await save_upload_to_media(file)
     # 2) Cargar PIL desde el archivo guardado
     img = Image.open(saved["abs_path"]).convert("RGB")
+
+    # Reduce tamaño para bajar RAM/CPU (ajusta 1024 si quieres)
+    img.thumbnail((1024, 1024))
     # 3) Inferencia
     pred = predict_pil_image(img)
     # 4) Construir URL pública servida por StaticFiles
