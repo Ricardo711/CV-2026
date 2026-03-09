@@ -42,3 +42,19 @@ async def _ensure_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["quiz_images"].create_index(
         [("meat_quality_class", 1)], name="quiz_images_class_asc"
     )
+    # game images
+    await db["images"].create_index([("marbling_class", 1)], name="images_marbling_class_asc")
+    await db["images"].create_index([("created_at", -1)], name="images_created_at_desc")
+    # game sessions
+    await db["game_sessions"].create_index(
+        [("student_id", 1)], name="game_sessions_student_id_asc"
+    )
+    await db["game_sessions"].create_index(
+        [("student_id", 1), ("is_complete", 1)], name="game_sessions_student_active"
+    )
+    # game answers
+    await db["game_answers"].create_index(
+        [("session_id", 1), ("round_number", 1)],
+        unique=True,
+        name="game_answers_session_round_uniq",
+    )

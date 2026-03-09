@@ -19,7 +19,10 @@ class Settings(BaseSettings):
     mongodb_uri: str = "mongodb://localhost:27017"
     mongodb_db: str = "prediction_db"
 
-    cors_origins: str = "http://localhost:8501"
+    # cors_origins: str = "http://localhost:8501"
+    cors_origins: str = (
+        "http://localhost:8501, http://localhost:3000, http://localhost:5173"
+    )
 
     media_dir: str = "./media"
     media_url_prefix: str = "/media"

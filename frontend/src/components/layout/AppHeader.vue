@@ -11,7 +11,7 @@
                     <div class="text-sm text-white/70">
                         Image prediction model
                     </div>
-                    <div class="text-lg font-semibold">
+                    <div class="text-lg font-semibold text-white">
                         Training
                     </div>
                 </div>
@@ -20,7 +20,7 @@
             <!-- Right -->
             <div class="flex items-center gap-4">
                 <div class="hidden text-right sm:block">
-                    <div class="text-sm font-medium">
+                    <div class="text-sm font-medium text-white/90">
                         {{ displayName }}
                     </div>
                     <div class="text-xs text-white/60">
@@ -29,6 +29,7 @@
                 </div>
 
                 <button type="button" class="rounded-xl border border-white/10
+                text-zinc-500
                  bg-white/5 px-4 py-2 text-sm font-medium
                  hover:bg-white/10 active:scale-[0.99]
                  transition" @click="$emit('logout')">
