@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import io
-from PIL import Image
-
 from fastapi import APIRouter, File, UploadFile, Query, status, Form
 
+from app.ml.model import predict_image
 from app.core.config import settings
-from app.core.ml import predict_pil_image
 from app.core.storage import save_upload_to_media, delete_media_by_rel_path
 from app.models.prediction import PredictionOut, PredictionListOut
 from app.services.predictions_service import PredictionsService
@@ -24,16 +21,14 @@ async def predict(
 ):
     # 1) Guardar imagen localmente
     saved = await save_upload_to_media(file)
-    # 2) Cargar PIL desde el archivo guardado
-    img = Image.open(saved["abs_path"]).convert("RGB")
 
-    # Reduce tamaño para bajar RAM/CPU (ajusta 1024 si quieres)
-    img.thumbnail((1024, 1024))
-    # 3) Inferencia
-    pred = predict_pil_image(img)
-    # 4) Construir URL pública servida por StaticFiles
+    # 2) Inferencia con el modelo .pt usando la ruta guardada
+    pred = predict_image(saved["abs_path"])
+
+    # 3) Construir URL pública servida por StaticFiles
     image_url = settings.build_public_url(saved["rel_path"])
-    # 5) Persistir en DB
+
+    # 4) Persistir en DB
     doc = {
         "image_url": image_url,
         "image_path": saved["rel_path"],
@@ -70,7 +65,6 @@ async def get_prediction(prediction_id: str):
 @router.delete("/predictions/{prediction_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_prediction(prediction_id: str):
     deleted = await PredictionsService.delete(prediction_id)
-    # Borra archivo local
     if deleted.get("image_path"):
         delete_media_by_rel_path(deleted["image_path"])
     return None

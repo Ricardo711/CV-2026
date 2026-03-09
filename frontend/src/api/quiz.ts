@@ -13,5 +13,5 @@ export type QuizQuestion = {
 };
 
 export async function fetchQuizQuestion(): Promise<QuizQuestion> {
-  return api<QuizQuestion>("/api/quiz/question");
+  return api<QuizQuestion>("/quiz/question");
 }

@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.ml.model import load_model
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.mongo import init_mongo, close_mongo
@@ -14,16 +15,17 @@ from app.routers.predictions import router as predictions_router
 from app.routers.auth import router as auth_router
 from app.routers.quiz import router as quiz_router
 
+
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
     app = FastAPI(title=settings.app_name)
 
-    print("CORS ORIGINS EFFECTIVE:", settings.cors_origins_list)  # 👈 aquí
+    print("CORS ORIGINS EFFECTIVE:", settings.cors_origins_list)
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list,  # NO "*"
+        allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -38,15 +40,18 @@ def create_app() -> FastAPI:
     media_dir = Path(settings.media_dir)
     media_dir.mkdir(parents=True, exist_ok=True)
     app.mount(
-        settings.media_url_prefix, StaticFiles(directory=str(media_dir)), name="media"
+        settings.media_url_prefix,
+        StaticFiles(directory=str(media_dir)),
+        name="media",
     )
 
     @app.on_event("startup")
-    async def _startup() -> None:
+    async def startup() -> None:
         await init_mongo()
+        load_model()
 
     @app.on_event("shutdown")
-    async def _shutdown() -> None:
+    async def shutdown() -> None:
         await close_mongo()
 
     return app
