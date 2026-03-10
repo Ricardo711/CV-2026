@@ -10,6 +10,7 @@ class Game1AnswerIn(BaseModel):
     round_number: int = Field(ge=1, le=6)
     user_answer: str
     response_time_seconds: float = Field(ge=0)
+    confidence: int = Field(ge=1, le=5)
 
 
 class Game3AnswerIn(BaseModel):
@@ -37,6 +38,10 @@ class GameAnswerOut(BaseModel):
     correct_answer: str | None = None
     is_correct: bool | None = None
     response_time_seconds: float | None = None
+
+    # Game 1 specific
+    confidence: int | None = None
+
     # Game 2 specific
     first_answer: str | None = None
     first_confidence: int | None = None
@@ -46,6 +51,7 @@ class GameAnswerOut(BaseModel):
     trust_in_ai: int | None = None
     ai_confidence_rating: int | None = None
     uploaded_image_url: str | None = None
+
     created_at: datetime
 
 

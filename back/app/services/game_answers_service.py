@@ -25,6 +25,10 @@ def _to_out(doc: dict) -> dict:
         "correct_answer": doc.get("correct_answer"),
         "is_correct": doc.get("is_correct"),
         "response_time_seconds": doc.get("response_time_seconds"),
+
+        # Game 1 fields
+        "confidence": doc.get("confidence"),
+
         # Game 2 fields
         "first_answer": doc.get("first_answer"),
         "first_confidence": doc.get("first_confidence"),
@@ -73,6 +77,7 @@ class GameAnswersService:
         answer_id: str,
         user_answer: str,
         response_time_seconds: float,
+        confidence: int,
     ) -> dict:
         db = get_db()
         try:
@@ -93,6 +98,7 @@ class GameAnswersService:
                     "user_answer": user_answer,
                     "is_correct": is_correct,
                     "response_time_seconds": response_time_seconds,
+                    "confidence": confidence,
                 }
             },
         )

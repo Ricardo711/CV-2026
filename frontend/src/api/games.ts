@@ -19,6 +19,7 @@ export async function submitGame1Answer(params: {
   round_number: number;
   user_answer: string;
   response_time_seconds: number;
+  confidence: number;
 }): Promise<SubmitResult> {
   return api<SubmitResult>("/api/games/answers/game1", {
     method: "POST",

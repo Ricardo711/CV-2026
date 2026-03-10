@@ -214,6 +214,7 @@ async def submit_game1(
         answer_id=existing["id"],
         user_answer=payload.user_answer,
         response_time_seconds=payload.response_time_seconds,
+        confidence=payload.confidence,
     )
 
     if answer["is_correct"]:
