@@ -27,7 +27,7 @@ async function readBody(res: Response) {
 }
 
 // ✅ Base URL desde Vercel/Local
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 function buildUrl(path: string) {
   // Si ya viene full URL (http...), no lo toques
