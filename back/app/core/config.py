@@ -24,6 +24,12 @@ class Settings(BaseSettings):
         "http://localhost:8501, http://localhost:3000, http://localhost:5173"
     )
 
+    cloudinary_url: str | None = None
+
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: str | None = None
+    cloudinary_api_secret: str | None = None
+
     media_dir: str = "./media"
     media_url_prefix: str = "/media"
     public_base_url: str = "http://localhost:8000"
