@@ -20,7 +20,7 @@ from app.core.constants import FOUR_CLASSES, NINE_CLASSES, ROUND_SEQUENCE
 #from app.core.ml import predict_pil_image
 from app.core.ml_client import predict_with_ml_service
 from app.core.cloudinary_storage import upload_image
-from app.core.storage import save_upload_to_media
+from app.core.storage import save_upload_to_media, delete_media_by_rel_path
 from app.models.game_answer import (
     Game1AnswerIn,
     Game2FinalizeIn,
@@ -265,8 +265,6 @@ async def submit_game3(
 
 
 # ── Game 2: predict (step 1) ─────────────────────────────────────────────────
-
-
 @router.post("/predict", status_code=status.HTTP_200_OK)
 async def game2_predict(
     file: UploadFile = File(...),
@@ -300,40 +298,44 @@ async def game2_predict(
             status_code=409, detail="Predicción ya realizada para esta ronda"
         )
 
-    # Guardar imagen
+    # Guardar imagen temporalmente
     saved = await save_upload_to_media(file)
 
-    uploaded = upload_image(
-        saved["abs_path"],
-        folder="cv2026/uploads/game2",
-        filename=file.filename,
-    )
+    try:
+        # Subir a Cloudinary
+        uploaded = upload_image(
+            saved["abs_path"],
+            folder="cv2026/uploads/game2",
+            filename=file.filename,
+        )
 
-    image_url = uploaded["secure_url"]
+        image_url = uploaded["secure_url"]
 
-    # Inferencia ML
-    #img = Image.open(saved["abs_path"]).convert("RGB")
-    #pred = predict_pil_image(img)
-    pred = await predict_with_ml_service(saved["abs_path"])
+        # Inferencia ML
+        pred = await predict_with_ml_service(saved["abs_path"])
 
-    # Actualizar game_answer con datos del paso 1
-    answer = await GameAnswersService.update_game2_predict(
-        answer_id=existing["id"],
-        first_answer=first_answer,
-        first_confidence=first_confidence,
-        response_time_seconds=response_time_seconds,
-        ai_prediction=pred["predicted_label"],
-        ai_confidence=pred["confidence"],
-        uploaded_image_url=image_url,
-        uploaded_image_path=saved["rel_path"],
-    )
+        # Actualizar game_answer con datos del paso 1
+        answer = await GameAnswersService.update_game2_predict(
+            answer_id=existing["id"],
+            first_answer=first_answer,
+            first_confidence=first_confidence,
+            response_time_seconds=response_time_seconds,
+            ai_prediction=pred["predicted_label"],
+            ai_confidence=pred["confidence"],
+            uploaded_image_url=image_url,
+            uploaded_image_path=uploaded["public_id"],   # <- aquí cambia
+        )
 
-    return {
-        "answer_id": answer["id"],
-        "ai_prediction": pred["predicted_label"],
-        "ai_confidence": pred["confidence"],
-        "image_url": image_url,
-    }
+        return {
+            "answer_id": answer["id"],
+            "ai_prediction": pred["predicted_label"],
+            "ai_confidence": pred["confidence"],
+            "image_url": image_url,
+        }
+
+    finally:
+        if saved.get("rel_path"):
+            delete_media_by_rel_path(saved["rel_path"])
 
 
 # ── Game 2: finalize (step 2) ─────────────────────────────────────────────────
