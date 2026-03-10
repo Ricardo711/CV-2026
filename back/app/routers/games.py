@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.core.constants import FOUR_CLASSES, NINE_CLASSES, ROUND_SEQUENCE
 #from app.core.ml import predict_pil_image
 from app.core.ml_client import predict_with_ml_service
+from app.core.cloudinary_storage import upload_image
 from app.core.storage import save_upload_to_media
 from app.models.game_answer import (
     Game1AnswerIn,
@@ -301,7 +302,14 @@ async def game2_predict(
 
     # Guardar imagen
     saved = await save_upload_to_media(file)
-    image_url = settings.build_public_url(saved["rel_path"])
+
+    uploaded = upload_image(
+        saved["abs_path"],
+        folder="cv2026/uploads/game2",
+        filename=file.filename,
+    )
+
+    image_url = uploaded["secure_url"]
 
     # Inferencia ML
     #img = Image.open(saved["abs_path"]).convert("RGB")

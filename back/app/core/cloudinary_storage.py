@@ -5,6 +5,7 @@ import cloudinary.uploader
 
 from app.core.config import settings
 
+
 # Configuración al importar
 if settings.cloudinary_url:
     cloudinary.config(cloudinary_url=settings.cloudinary_url, secure=True)
@@ -17,14 +18,26 @@ else:
     )
 
 
-def upload_image(local_path: str, folder: str = "cv2026") -> dict:
+def upload_image(
+    local_path: str,
+    folder: str = "cv2026",
+    filename: str | None = None,
+) -> dict:
     """
     Sube una imagen local a Cloudinary y regresa metadatos útiles.
     """
+
+    upload_options = {
+        "folder": folder,
+        "resource_type": "image",
+    }
+
+    if filename:
+        upload_options["public_id"] = filename
+
     result = cloudinary.uploader.upload(
         local_path,
-        folder=folder,
-        resource_type="image",
+        **upload_options,
     )
 
     return {
