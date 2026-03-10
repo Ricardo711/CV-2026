@@ -4,6 +4,7 @@ from fastapi import APIRouter, File, UploadFile, Query, status, Form
 
 #from app.ml.model import predict_image
 from app.core.ml_client import predict_with_ml_service
+from app.core.cloudinary_storage import upload_image
 from app.core.config import settings
 from app.core.storage import save_upload_to_media, delete_media_by_rel_path
 from app.models.prediction import PredictionOut, PredictionListOut
@@ -20,35 +21,43 @@ async def predict(
     file: UploadFile = File(...),
     student_marbling_answer: str | None = Form(default=None),
 ):
-    # 1) Guardar imagen localmente
+    # 1) Guardar imagen temporalmente
     saved = await save_upload_to_media(file)
 
-    # 2) Inferencia con el modelo .pt usando la ruta guardada
-    pred = await predict_with_ml_service(saved["abs_path"])
-    #pred = predict_image(saved["abs_path"])
+    try:
+        # 2) Subir imagen a Cloudinary
+        uploaded = upload_image(
+            saved["abs_path"],
+            folder="cv2026/uploads/predictions",
+            filename=file.filename,
+        )
 
-    # 3) Construir URL pública servida por StaticFiles
-    image_url = settings.build_public_url(saved["rel_path"])
+        # 3) Inferencia con el servicio ML usando el archivo temporal
+        pred = await predict_with_ml_service(saved["abs_path"])
 
-    # 4) Persistir en DB
-    doc = {
-        "image_url": image_url,
-        "image_path": saved["rel_path"],
-        "student_marbling_answer": student_marbling_answer,
-        **pred,
-    }
-    created = await PredictionsService.create(doc)
+        # 4) Persistir en DB usando Cloudinary
+        doc = {
+            "image_url": uploaded["secure_url"],
+            "image_path": uploaded["public_id"],
+            "student_marbling_answer": student_marbling_answer,
+            **pred,
+        }
+        created = await PredictionsService.create(doc)
 
-    return {
-        "id": created["id"],
-        "image_url": created["image_url"],
-        "image_path": created["image_path"],
-        "predicted_index": created["predicted_index"],
-        "predicted_label": created["predicted_label"],
-        "confidence": created["confidence"],
-        "created_at": created["created_at"],
-        "student_marbling_answer": created["student_marbling_answer"],
-    }
+        return {
+            "id": created["id"],
+            "image_url": created["image_url"],
+            "image_path": created["image_path"],
+            "predicted_index": created["predicted_index"],
+            "predicted_label": created["predicted_label"],
+            "confidence": created["confidence"],
+            "created_at": created["created_at"],
+            "student_marbling_answer": created["student_marbling_answer"],
+        }
+
+    finally:
+        if saved.get("rel_path"):
+            delete_media_by_rel_path(saved["rel_path"])
 
 
 @router.get("/predictions", response_model=list[PredictionListOut])
@@ -69,6 +78,7 @@ async def delete_prediction(prediction_id: str):
     deleted = await PredictionsService.delete(prediction_id)
     if deleted.get("image_path"):
         delete_media_by_rel_path(deleted["image_path"])
+        pass
     return None
 
 
