@@ -12,12 +12,13 @@ from fastapi import (
     UploadFile,
     status,
 )
-from PIL import Image
+#from PIL import Image
 
 from app.core.auth_deps import get_current_user
 from app.core.config import settings
 from app.core.constants import FOUR_CLASSES, NINE_CLASSES, ROUND_SEQUENCE
-from app.core.ml import predict_pil_image
+#from app.core.ml import predict_pil_image
+from app.core.ml_client import predict_with_ml_service
 from app.core.storage import save_upload_to_media
 from app.models.game_answer import (
     Game1AnswerIn,
@@ -303,8 +304,9 @@ async def game2_predict(
     image_url = settings.build_public_url(saved["rel_path"])
 
     # Inferencia ML
-    img = Image.open(saved["abs_path"]).convert("RGB")
-    pred = predict_pil_image(img)
+    #img = Image.open(saved["abs_path"]).convert("RGB")
+    #pred = predict_pil_image(img)
+    pred = await predict_with_ml_service(saved["abs_path"])
 
     # Actualizar game_answer con datos del paso 1
     answer = await GameAnswersService.update_game2_predict(

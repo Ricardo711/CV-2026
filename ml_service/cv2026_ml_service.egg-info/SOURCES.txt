@@ -1,0 +1,9 @@
+pyproject.toml
+app/__init__.py
+app/main.py
+app/model.py
+cv2026_ml_service.egg-info/PKG-INFO
+cv2026_ml_service.egg-info/SOURCES.txt
+cv2026_ml_service.egg-info/dependency_links.txt
+cv2026_ml_service.egg-info/requires.txt
+cv2026_ml_service.egg-info/top_level.txt

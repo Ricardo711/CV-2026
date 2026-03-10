@@ -24,6 +24,8 @@ class Settings(BaseSettings):
         "http://localhost:8501, http://localhost:3000, http://localhost:5173"
     )
 
+    ml_service_url: str = "http://localhost:8001"
+
     cloudinary_url: str | None = None
 
     cloudinary_cloud_name: str | None = None

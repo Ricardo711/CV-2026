@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, UploadFile, Query, status, Form
 
-from app.ml.model import predict_image
+#from app.ml.model import predict_image
+from app.core.ml_client import predict_with_ml_service
 from app.core.config import settings
 from app.core.storage import save_upload_to_media, delete_media_by_rel_path
 from app.models.prediction import PredictionOut, PredictionListOut
@@ -23,7 +24,8 @@ async def predict(
     saved = await save_upload_to_media(file)
 
     # 2) Inferencia con el modelo .pt usando la ruta guardada
-    pred = predict_image(saved["abs_path"])
+    pred = await predict_with_ml_service(saved["abs_path"])
+    #pred = predict_image(saved["abs_path"])
 
     # 3) Construir URL pública servida por StaticFiles
     image_url = settings.build_public_url(saved["rel_path"])
