@@ -51,3 +51,9 @@ back/scripts/
 # Logs
 # ==============================
 *.log
+
+# PERMITIR el modelo del ml_service
+
+!ml_service/
+!ml_service/models/
+!ml_service/models/best.pt
