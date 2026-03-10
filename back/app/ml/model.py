@@ -20,7 +20,8 @@ transform = None
 def load_model() -> None:
     global model, class_names, image_size, transform
 
-    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
+    # checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
+    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
 
     config = checkpoint["config"]
     class_names = checkpoint["class_names"]
@@ -42,14 +43,16 @@ def load_model() -> None:
 
     model = model_instance
 
-    transform = transforms.Compose([
-        transforms.Resize((image_size, image_size)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],
-        ),
-    ])
+    transform = transforms.Compose(
+        [
+            transforms.Resize((image_size, image_size)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225],
+            ),
+        ]
+    )
 
 
 def predict_image(image_path: str) -> dict:

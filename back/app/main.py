@@ -14,6 +14,9 @@ from app.routers.health import router as health_router
 from app.routers.predictions import router as predictions_router
 from app.routers.auth import router as auth_router
 from app.routers.quiz import router as quiz_router
+from app.routers.sessions import router as sessions_router
+from app.routers.games import router as games_router
+from app.routers.images import router as images_router
 
 
 def create_app() -> FastAPI:
@@ -35,6 +38,9 @@ def create_app() -> FastAPI:
     app.include_router(predictions_router)
     app.include_router(auth_router)
     app.include_router(quiz_router)
+    app.include_router(sessions_router, prefix="/api")
+    app.include_router(games_router, prefix="/api")
+    app.include_router(images_router, prefix="/api")
 
     # Static files: /media -> ./media
     media_dir = Path(settings.media_dir)

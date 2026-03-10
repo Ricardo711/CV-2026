@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginPage from "../pages/LoginPage.vue";
-import HomePage from "../pages/HomePage.vue";
+import GamePage from "../pages/GamePage.vue";
 import { useAuthStore } from "../stores/auth";
 
 const router = createRouter({
@@ -12,7 +12,7 @@ const router = createRouter({
       component: LoginPage,
       meta: { public: true },
     },
-    { path: "/", name: "home", component: HomePage },
+    { path: "/", name: "home", component: GamePage },
   ],
 });
 
