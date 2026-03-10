@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from threading import Lock
 
 import torch
 import torch.nn as nn
@@ -15,49 +16,61 @@ model = None
 class_names: list[str] = []
 image_size: int = 224
 transform = None
+_model_lock = Lock()
 
 
 def load_model() -> None:
     global model, class_names, image_size, transform
 
-    # checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
-    checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
+    if model is not None and transform is not None:
+        return
 
-    config = checkpoint["config"]
-    class_names = checkpoint["class_names"]
-    image_size = int(config.get("image_size", 224))
-    num_classes = len(class_names)
-    dropout = float(config.get("head_dropout", 0.2))
+    with _model_lock:
+        if model is not None and transform is not None:
+            return
 
-    model_instance = models.densenet169(weights=None)
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
 
-    in_features = model_instance.classifier.in_features
-    model_instance.classifier = nn.Sequential(
-        nn.Dropout(dropout),
-        nn.Linear(in_features, num_classes),
-    )
+        checkpoint = torch.load(
+            MODEL_PATH,
+            map_location=DEVICE,
+            weights_only=False,
+        )
 
-    model_instance.load_state_dict(checkpoint["model_state"])
-    model_instance.to(DEVICE)
-    model_instance.eval()
+        config = checkpoint["config"]
+        class_names = checkpoint["class_names"]
+        image_size = int(config.get("image_size", 224))
+        num_classes = len(class_names)
+        dropout = float(config.get("head_dropout", 0.2))
 
-    model = model_instance
+        model_instance = models.densenet169(weights=None)
 
-    transform = transforms.Compose(
-        [
+        in_features = model_instance.classifier.in_features
+        model_instance.classifier = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(in_features, num_classes),
+        )
+
+        model_instance.load_state_dict(checkpoint["model_state"])
+        model_instance.to(DEVICE)
+        model_instance.eval()
+
+        model = model_instance
+
+        transform = transforms.Compose([
             transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225],
             ),
-        ]
-    )
+        ])
 
 
 def predict_image(image_path: str) -> dict:
     if model is None or transform is None:
-        raise RuntimeError("Model is not loaded")
+        load_model()
 
     image = Image.open(image_path).convert("RGB")
     x = transform(image).unsqueeze(0).to(DEVICE)

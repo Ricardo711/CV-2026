@@ -54,7 +54,6 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup() -> None:
         await init_mongo()
-        load_model()
 
     @app.on_event("shutdown")
     async def shutdown() -> None:
