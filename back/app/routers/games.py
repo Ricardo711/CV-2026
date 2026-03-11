@@ -76,7 +76,6 @@ def _build_placeholder_game3() -> dict:
 
 # ── Round data ────────────────────────────────────────────────────────────────
 
-
 @router.get("/round-data")
 async def get_round_data(
     session_id: str = Query(...),
@@ -88,7 +87,8 @@ async def get_round_data(
     Si ya existe un game_answer para esa ronda, retorna el mismo (idempotente).
     No expone la respuesta correcta al cliente.
     """
-    session = await _get_verified_session(session_id, current_user["id"])
+    #session = await _get_verified_session(session_id, current_user["id"])
+    await _get_verified_session(session_id, current_user["id"])
     game_type = _game_type_for_round(round)
 
     # Verificar si ya existe un answer para esta ronda
@@ -99,14 +99,16 @@ async def get_round_data(
 
     # Crear nuevo game_answer según el tipo de juego
     if game_type == 1:
-        img = await GameImagesService.get_random_for_game1()
+        #img = await GameImagesService.get_random_for_game1()
+        img = await GameImagesService.get_random_for_game1(session_id)
         if img:
             answer_doc = {
                 "session_id": session_id,
                 "round_number": round,
                 "game_type": 1,
                 "image_id": img["id"],
-                "correct_answer": img["marbling_class"],
+                #"correct_answer": img["marbling_class"],
+                "correct_answer": img["true_class"],
             }
             created = await GameAnswersService.create(answer_doc)
             return {
@@ -139,7 +141,8 @@ async def get_round_data(
         return {"game_type": 2, "answer_id": created["id"]}
 
     else:  # game_type == 3
-        game3_data = await GameImagesService.get_images_for_game3()
+        #game3_data = await GameImagesService.get_images_for_game3()
+        game3_data = await GameImagesService.get_images_for_game3(session_id)
         if game3_data:
             answer_doc = {
                 "session_id": session_id,
@@ -147,12 +150,16 @@ async def get_round_data(
                 "game_type": 3,
                 "correct_image_id": game3_data["correct_image_id"],
                 "correct_answer": game3_data["target_class"],
+                "difficulty": game3_data["difficulty"],
+                "images": game3_data["images"],
             }
             created = await GameAnswersService.create(answer_doc)
             return {
                 "game_type": 3,
                 "answer_id": created["id"],
                 "target_class": game3_data["target_class"],
+                "correct_image_id": game3_data["correct_image_id"],
+                "difficulty": game3_data["difficulty"],
                 "images": game3_data["images"],
             }
         else:
@@ -163,10 +170,11 @@ async def get_round_data(
                 "game_type": 3,
                 "correct_image_id": placeholder["correct_image_id"],
                 "correct_answer": placeholder["target_class"],
+                "difficulty": "medium",
+                "images": placeholder["images"],
             }
             created = await GameAnswersService.create(answer_doc)
             placeholder["answer_id"] = created["id"]
-            del placeholder["correct_image_id"]
             return placeholder
 
 
@@ -185,7 +193,9 @@ def _build_round_response(game_type: int, answer_id: str, existing: dict) -> dic
             "game_type": 3,
             "answer_id": answer_id,
             "target_class": existing.get("correct_answer", ""),
-            "images": [],
+            "correct_image_id": existing.get("correct_image_id", ""),
+            "difficulty": existing.get("difficulty", "medium"),
+            "images": existing.get("images", []),
         }
 
 

@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from app.db.mongo import get_db
 
 COLLECTION = "game_answers"
+IMAGES_COLLECTION = "images_clases"
 
 
 def _utcnow() -> datetime:
@@ -21,6 +22,7 @@ def _to_out(doc: dict) -> dict:
         "game_type": doc["game_type"],
         "round_number": doc["round_number"],
         "image_id": doc.get("image_id"),
+
         "user_answer": doc.get("user_answer"),
         "correct_answer": doc.get("correct_answer"),
         "is_correct": doc.get("is_correct"),
@@ -28,6 +30,12 @@ def _to_out(doc: dict) -> dict:
 
         # Game 1 fields
         "confidence": doc.get("confidence"),
+
+        # Game 3 fields
+        "correct_image_id": doc.get("correct_image_id"),
+        "selected_image_id": doc.get("selected_image_id"),
+        "difficulty": doc.get("difficulty"),
+        "images": doc.get("images"),
 
         # Game 2 fields
         "first_answer": doc.get("first_answer"),
@@ -122,13 +130,32 @@ class GameAnswersService:
         if not doc:
             raise HTTPException(status_code=404, detail="Respuesta no encontrada")
 
-        is_correct = selected_image_id == doc.get("correct_image_id")
+        correct_image_id = doc.get("correct_image_id")
+        is_correct = selected_image_id == correct_image_id
+
+        # Buscar la imagen seleccionada para obtener su clase real
+        try:
+            selected_obj_id = ObjectId(selected_image_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="selected_image_id inválido")
+
+        selected_image_doc = await db[IMAGES_COLLECTION].find_one({"_id": selected_obj_id})
+        if not selected_image_doc:
+            raise HTTPException(status_code=404, detail="Imagen seleccionada no encontrada")
+
+        selected_class = selected_image_doc.get("true_class")
+        if not selected_class:
+            raise HTTPException(
+                status_code=400,
+                detail="La imagen seleccionada no tiene true_class",
+            )
 
         await db[COLLECTION].update_one(
             {"_id": _id},
             {
                 "$set": {
-                    "user_answer": selected_image_id,
+                    "selected_image_id": selected_image_id,
+                    "user_answer": selected_class,
                     "is_correct": is_correct,
                     "response_time_seconds": response_time_seconds,
                 }

@@ -56,6 +56,8 @@ export type RoundData3 = {
   game_type: 3;
   answer_id: string;
   target_class: string;
+  correct_image_id: string;
+  difficulty: "low" | "medium" | "hard" | string;
   images: GameImageRef[];
 };
 
@@ -72,6 +74,16 @@ export type GameAnswer = {
   correct_answer: string | null;
   is_correct: boolean | null;
   response_time_seconds: number | null;
+
+  // Game 1 specific
+  confidence: number | null;
+
+  // Game 3 specific
+  correct_image_id: string | null;
+  selected_image_id: string | null;
+  difficulty: string | null;
+  images: GameImageRef[] | null;
+
   // Game 2 specific
   first_answer: string | null;
   first_confidence: number | null;

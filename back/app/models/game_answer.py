@@ -33,7 +33,10 @@ class GameAnswerOut(BaseModel):
     session_id: str
     game_type: int
     round_number: int
+
     image_id: str | None = None
+
+    # Respuestas generales
     user_answer: str | None = None
     correct_answer: str | None = None
     is_correct: bool | None = None
@@ -41,6 +44,12 @@ class GameAnswerOut(BaseModel):
 
     # Game 1 specific
     confidence: int | None = None
+
+    # Game 3 specific
+    correct_image_id: str | None = None
+    selected_image_id: str | None = None
+    difficulty: str | None = None
+    images: list[dict] | None = None
 
     # Game 2 specific
     first_answer: str | None = None
@@ -51,6 +60,7 @@ class GameAnswerOut(BaseModel):
     trust_in_ai: int | None = None
     ai_confidence_rating: int | None = None
     uploaded_image_url: str | None = None
+    uploaded_image_path: str | None = None
 
     created_at: datetime
 
