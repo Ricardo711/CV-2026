@@ -38,7 +38,14 @@ async def _ensure_indexes(db: AsyncIOMotorDatabase) -> None:
     await db["predictions"].create_index(
         [("created_at", -1)], name="predictions_created_at_desc"
     )
-    await db["users"].create_index([("email", 1)], unique=True, name="uniq_user_email")
+    #await db["users"].create_index([("email", 1)], unique=True, name="uniq_user_email")
+      # Users
+    await db["users"].create_index(
+        [("username", 1)],
+        unique=True,
+        name="uniq_user_username",
+        partialFilterExpression={"username": {"$type": "string"}},
+    )
     await db["quiz_images"].create_index(
         [("meat_quality_class", 1)], name="quiz_images_class_asc"
     )
