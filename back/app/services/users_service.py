@@ -24,6 +24,7 @@ class UsersService:
             [("username", 1)],
             unique=True,
             name="uniq_user_username",
+            partialFilterExpression={"username": {"$type": "string"}},
         )
 
     @staticmethod
@@ -43,11 +44,21 @@ class UsersService:
 
         try:
             res = await db[UsersService.collection_name].insert_one(doc)
-        except DuplicateKeyError:
+        except DuplicateKeyError as e:
+            errmsg = str(e)
+
+            if "username" in errmsg:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Ese username ya está registrado.",
+                )
+
             raise HTTPException(
                 status_code=409,
-                detail="Ese username ya está registrado.",
+                detail=f"DuplicateKeyError real: {errmsg}",
             )
+
+
 
         return {
             "id": str(res.inserted_id),
