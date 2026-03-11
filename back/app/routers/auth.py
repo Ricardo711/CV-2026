@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Response, status
 
+from app.core.auth_deps import get_current_user
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.core.auth_deps import get_current_user
-from app.models.user import UserCreate, UserOut, LoginIn, LoginOut
+from app.models.user import LoginIn, LoginOut, UserCreate, UserOut
 from app.services.users_service import UsersService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -14,15 +14,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserCreate):
     return await UsersService.create_user(
-        email=payload.email,
+        username=payload.username,
         password=payload.password,
-        full_name=payload.full_name,
     )
 
 
 @router.post("/login", response_model=LoginOut)
 async def login(payload: LoginIn, response: Response):
-    user = await UsersService.authenticate(payload.email, payload.password)
+    user = await UsersService.authenticate(payload.username, payload.password)
 
     token = create_access_token(subject=user["id"])
 

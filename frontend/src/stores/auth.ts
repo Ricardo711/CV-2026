@@ -7,12 +7,15 @@ export const useAuthStore = defineStore("auth", {
     user: null as User | null,
     bootstrapped: false,
   }),
+
   getters: {
     isAuthed: (s) => !!s.user,
   },
+
   actions: {
     async bootstrap() {
       if (this.bootstrapped) return;
+
       try {
         const user = await AuthAPI.me();
         this.user = user;
@@ -23,8 +26,8 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    async login(email: string, password: string) {
-      const res: LoginResponse = await AuthAPI.login({ email, password });
+    async login(username: string, password: string) {
+      const res: LoginResponse = await AuthAPI.login({ username, password });
 
       const { access_token: _token, token_type: _type, ...user } = res;
       this.user = user;

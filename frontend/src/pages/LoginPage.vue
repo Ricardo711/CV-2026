@@ -10,10 +10,10 @@
                             <p class="text-sm text-white/70 mb-6">Welcome! Log in to your account to continue.</p>
                             <n-form ref="formRef" :model="model" :rules="rules" @submit.prevent="onSubmit">
                                 <div class="flex flex-col space-y-4 mb-6">
-                                    <label for="email">
-                                        <div class="text-sm text-white/70 mb-1">Email</div>
-                                        <input type="text" id="email" v-model="model.email"
-                                            placeholder="you@example.com"
+                                    <label for="username">
+                                        <div class="text-sm text-white/70 mb-1">username</div>
+                                        <input type="text" id="username" v-model="model.username"
+                                            placeholder="username"
                                             class="w-full border rounded-full px-3 py-2 border-white/20 bg-[#171717] text-white focus:outline-none focus:ring-1 focus:ring-[#8c0a42] focus:border-transparent" />
                                     </label>
                                     <label for="password">
@@ -66,14 +66,14 @@ const formRef = ref<FormInst | null>(null);
 const loading = ref(false);
 
 const model = reactive({
-    email: "",
+    username: "",
     password: "",
 });
 
 const rules: FormRules = {
-    email: [
-        { required: true, message: "Email requerido", trigger: ["input", "blur"] },
-        { type: "email", message: "Email inválido", trigger: ["blur"] },
+    username: [
+        { required: true, message: "username requerido", trigger: ["input", "blur"] },
+        { type: "string", message: "username inválido", trigger: ["blur"] },
     ],
     password: [{ required: true, message: "Password requerido", trigger: ["input", "blur"] }],
 };
@@ -83,7 +83,7 @@ async function onSubmit() {
         await formRef.value?.validate();
         loading.value = true;
 
-        await auth.login(model.email, model.password);
+        await auth.login(model.username, model.password);
 
         const next = typeof route.query.next === "string" ? route.query.next : "/";
         router.replace(next);

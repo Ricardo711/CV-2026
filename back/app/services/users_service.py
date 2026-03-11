@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from bson import ObjectId
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
@@ -20,34 +21,49 @@ class UsersService:
     async def ensure_indexes() -> None:
         db = get_db()
         await db[UsersService.collection_name].create_index(
-            [("email", 1)], unique=True, name="uniq_user_email"
+            [("username", 1)],
+            unique=True,
+            name="uniq_user_username",
         )
 
     @staticmethod
-    async def create_user(email: str, password: str, full_name: str | None) -> dict:
+    async def create_user(
+        username: str,
+        password: str,
+    ) -> dict:
         db = get_db()
+
+        normalized_username = username.strip().lower()
+
         doc = {
-            "email": email.lower(),
+            "username": normalized_username,
             "password_hash": hash_password(password),
-            "full_name": full_name,
             "created_at": _utcnow(),
         }
+
         try:
             res = await db[UsersService.collection_name].insert_one(doc)
         except DuplicateKeyError:
-            raise HTTPException(status_code=409, detail="Ese email ya está registrado.")
+            raise HTTPException(
+                status_code=409,
+                detail="Ese username ya está registrado.",
+            )
 
         return {
             "id": str(res.inserted_id),
-            "email": doc["email"],
-            "full_name": doc["full_name"],
+            "username": doc["username"],
             "created_at": doc["created_at"],
         }
 
     @staticmethod
-    async def authenticate(email: str, password: str) -> dict:
+    async def authenticate(username: str, password: str) -> dict:
         db = get_db()
-        user = await db[UsersService.collection_name].find_one({"email": email.lower()})
+
+        normalized_username = username.strip().lower()
+
+        user = await db[UsersService.collection_name].find_one(
+            {"username": normalized_username}
+        )
         if not user:
             raise HTTPException(status_code=401, detail="Credenciales inválidas.")
 
@@ -56,15 +72,13 @@ class UsersService:
 
         return {
             "id": str(user["_id"]),
-            "email": user["email"],
-            "full_name": user.get("full_name"),
+            "username": user["username"],
             "created_at": user["created_at"],
         }
 
     @staticmethod
     async def get_by_id(user_id: str) -> dict:
         db = get_db()
-        from bson import ObjectId
 
         try:
             _id = ObjectId(user_id)
@@ -77,7 +91,6 @@ class UsersService:
 
         return {
             "id": str(user["_id"]),
-            "email": user["email"],
-            "full_name": user.get("full_name"),
+            "username": user["username"],
             "created_at": user["created_at"],
         }

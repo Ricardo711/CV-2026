@@ -2,13 +2,12 @@ import { api } from "./http";
 
 export type User = {
   id: string;
-  email: string;
-  full_name: string | null;
-  created_at: string; // ISO
+  username: string;
+  created_at: string;
 };
 
 export type LoginPayload = {
-  email: string;
+  username: string;
   password: string;
 };
 
@@ -28,4 +27,3 @@ export async function me(): Promise<User> {
 export async function logout(): Promise<void> {
   await api<null>("/auth/logout", { method: "POST" });
 }
-

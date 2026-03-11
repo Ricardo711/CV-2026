@@ -18,6 +18,8 @@ from app.routers.sessions import router as sessions_router
 from app.routers.games import router as games_router
 from app.routers.images import router as images_router
 
+from app.services.users_service import UsersService
+
 
 def create_app() -> FastAPI:
     setup_logging(settings.log_level)
@@ -54,6 +56,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup() -> None:
         await init_mongo()
+        await UsersService.ensure_indexes()
 
     @app.on_event("shutdown")
     async def shutdown() -> None:
